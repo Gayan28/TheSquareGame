@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var gameCompleted: Bool = false
     @State private var showCountdown: Bool = true
     @State private var countdown: Int = 3
+    @State private var isShowingColors: Bool = false // New state variable
 
     init() {
         var baseColors: [Color] = [.red, .green, .blue, .orange]
@@ -61,7 +62,7 @@ struct ContentView: View {
                                 handleSelection(index: index)
                             }) {
                                 Rectangle()
-                                    .fill(squares[index])
+                                    .fill(isShowingColors ? buttonColors[index] : squares[index])
                                     .frame(width: 100, height: 100)
                                     .cornerRadius(10)
                                     .shadow(radius: 5)
@@ -97,11 +98,17 @@ struct ContentView: View {
                 countdown = second
                 if second == 0 {
                     showCountdown = false
+                    showAllColors() // Show colors before starting the game
                 }
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(countdown)) {
-            startGame()
+    }
+    
+    func showAllColors() {
+        // Show all colors for 3 seconds
+        isShowingColors = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            startGame() // Start the game after showing colors
         }
     }
     
@@ -112,6 +119,7 @@ struct ContentView: View {
         isProcessing = false
         gameCompleted = false
         buttonColors.shuffle()
+        isShowingColors = false // Hide the colors after starting the game
     }
 
     func handleSelection(index: Int) {
@@ -153,7 +161,8 @@ struct ContentView: View {
         isProcessing = false
         gameCompleted = false
         showCountdown = true
-        countdown = 5
+        countdown = 3
+        isShowingColors = false // Reset color showing state
         buttonColors.shuffle()
     }
 }
