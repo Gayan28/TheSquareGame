@@ -8,10 +8,10 @@
 import SwiftUI
 
 @main
-struct square_gameApp: App {
+struct MyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomePage()
         }
     }
 }

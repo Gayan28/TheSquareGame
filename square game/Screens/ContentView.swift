@@ -32,14 +32,13 @@ struct ContentView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(Color.black)
-                    .padding(.bottom)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.bottom, 50)
 
                 Text("Points: \(points)")
                     .font(.title3)
                     .fontWeight(.medium)
-                    .foregroundColor(Color.black)
+                    .foregroundColor(Color.blue)
                     .lineLimit(nil)
                     .frame(width: 100.0)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -48,7 +47,7 @@ struct ContentView: View {
                 if showColors {
                     Text("Game starts in: \(countdown)")
                         .font(.headline)
-                        .foregroundColor(.green)
+                        .foregroundColor(.red)
                         .padding(.bottom, 20)
                 }
 
@@ -67,6 +66,12 @@ struct ContentView: View {
                         .disabled(isProcessing || squares[index] != .gray || gameCompleted || showColors)
                     }
                 }
+                /* Text("Your highest score is \(HighScoreView())")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(highScore > 0 ? .green : .gray) // Color based on score
+                    .padding()
+                 */
 
                 Button("Restart Game") {
                     restartGame()
@@ -169,8 +174,19 @@ struct ContentView: View {
         gameCompleted = false
         startGame()
     }
+    func endGame() {
+        // Get the current highest score from UserDefaults
+        let currentHighScore = UserDefaults.standard.integer(forKey: "HighScore")
+        
+        // If the player's score is higher than the current high score, update it
+        if points > currentHighScore {
+            UserDefaults.standard.set(points, forKey: "HighScore")
+        }
+        
+        // Continue with other game-ending logic (e.g., displaying the congratulations message)
+    }
 }
 
 #Preview {
-    ContentView()
+    HomePage()
 }
