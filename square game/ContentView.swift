@@ -10,16 +10,15 @@ struct ContentView: View {
     @State private var squares: [Color] = Array(repeating: .gray, count: 9)
     @State private var selectedIndices: [Int] = []
     @State private var points: Int = 0
-    @State private var showAlert: Bool = false
+    @State private var showFailureAlert: Bool = false
     @State private var buttonColors: [Color] = []
     @State private var isProcessing: Bool = false
     @State private var gameCompleted: Bool = false
-    @State private var showCountdown: Bool = true
+    @State private var showColors: Bool = true
     @State private var countdown: Int = 3
-    @State private var isShowingColors: Bool = false // New state variable
 
     init() {
-        var baseColors: [Color] = [.red, .green, .blue, .orange]
+        var baseColors: [Color] = [.red, .green, .blue, .yellow]
         baseColors += baseColors
         baseColors.append(.clear)
         baseColors.shuffle()
@@ -28,142 +27,147 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            if showCountdown {
-                VStack {
-                    Text("Game Starts In \(countdown)")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(Color.blue)
-                        .padding()
-                    .onAppear(perform: startCountdown)
+            VStack {
+                Text("Color Match Game")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.black)
+                    .padding(.bottom)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 50)
+
+                Text("Points: \(points)")
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .foregroundColor(Color.black)
+                    .lineLimit(nil)
+                    .frame(width: 100.0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 20)
+
+                if showColors {
+                    Text("Game starts in: \(countdown)")
+                        .font(.headline)
+                        .foregroundColor(.green)
+                        .padding(.bottom, 20)
                 }
-            } else {
-                VStack {
-                    Text("Color Match Game")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(Color.blue)
-                        .padding(.bottom)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.bottom, 50)
 
-                    Text("Points: \(points)")
-                        .font(.title3)
-                        .fontWeight(.medium)
-                        .foregroundColor(Color.black)
-                        .lineLimit(nil)
-                        .frame(width: 100.0)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.bottom, 70)
-
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
-                        ForEach(0..<9, id: \.self) { index in
-                            Button(action: {
-                                handleSelection(index: index)
-                            }) {
-                                Rectangle()
-                                    .fill(isShowingColors ? buttonColors[index] : squares[index])
-                                    .frame(width: 100, height: 100)
-                                    .cornerRadius(10)
-                                    .shadow(radius: 5)
-                                    .padding(.all, 10)
-                            }
-                            .disabled(isProcessing || squares[index] != .gray || gameCompleted)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
+                    ForEach(0..<9, id: \.self) { index in
+                        Button(action: {
+                            handleSelection(index: index)
+                        }) {
+                            Rectangle()
+                                .fill(squares[index])
+                                .frame(width: 100, height: 100)
+                                .cornerRadius(10)
+                                .shadow(radius: 5)
+                                .padding(.all, 10)
                         }
+                        .disabled(isProcessing || squares[index] != .gray || gameCompleted || showColors)
                     }
+                }
 
-                    Button("Restart Game") {
-                        restartGame()
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(25)
+                Button("Restart Game") {
+                    restartGame()
                 }
                 .padding()
-                .alert(gameCompleted ? "You Have Won!" : "Try Again", isPresented: $showAlert) {
-                    Button(gameCompleted ? "Play Again" : "OK", role: .cancel) {
-                        if gameCompleted {
-                            restartGame()
-                        }
-                    }
-                }
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(25)
             }
+            .padding()
+
+            if gameCompleted {
+                VStack {
+                    Text("Congratulations!")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding()
+
+                    Text("You've matched all the colors!")
+                        .font(.headline)
+                        .foregroundColor(.white)
+
+                    Button(action: restartGame) {
+                        Text("Play Again")
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding(.top, 20)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black.opacity(0.8))
+                .edgesIgnoringSafeArea(.all)
+                .transition(.opacity)
+                .animation(.easeInOut, value: gameCompleted)
+            }
+        }
+        .onAppear(perform: startGame)
+        .alert("No Color Matched!", isPresented: $showFailureAlert) {
+            Button("OK", role: .cancel) { }
         }
     }
 
-    func startCountdown() {
-        for second in (0..<countdown).reversed() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(countdown - second)) {
-                countdown = second
-                if second == 0 {
-                    showCountdown = false
-                    showAllColors() // Show colors before starting the game
-                }
+    func startGame() {
+        squares = buttonColors
+        countdown = 3
+        showColors = true
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+            if countdown > 0 {
+                countdown -= 1
+            } else {
+                timer.invalidate()
+                squares = Array(repeating: .gray, count: 9)
+                showColors = false
             }
         }
-    }
-    
-    func showAllColors() {
-        // Show all colors for 3 seconds
-        isShowingColors = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            startGame() // Start the game after showing colors
-        }
-    }
-    
-    func startGame() {
-        squares = Array(repeating: .gray, count: 9)
-        points = 0
-        selectedIndices.removeAll()
-        isProcessing = false
-        gameCompleted = false
-        buttonColors.shuffle()
-        isShowingColors = false // Hide the colors after starting the game
     }
 
     func handleSelection(index: Int) {
         guard squares[index] == .gray, buttonColors[index] != .clear else { return }
-        
+
         squares[index] = buttonColors[index]
         selectedIndices.append(index)
-        
+
         if selectedIndices.count == 2 {
             isProcessing = true
             let firstIndex = selectedIndices[0]
             let secondIndex = selectedIndices[1]
-            
+
             if buttonColors[firstIndex] == buttonColors[secondIndex] {
                 points += 1
                 selectedIndices.removeAll()
                 isProcessing = false
 
-                if squares.allSatisfy({ $0 != .gray }) {
-                    gameCompleted = true
-                    showAlert = true
+                // Check if the score is 4 to complete the game
+                if points == 4 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        gameCompleted = true
+                    }
                 }
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     squares[firstIndex] = .gray
                     squares[secondIndex] = .gray
-                    showAlert = true
                     selectedIndices.removeAll()
                     isProcessing = false
+                    showFailureAlert = true
                 }
             }
         }
     }
-    
     func restartGame() {
         squares = Array(repeating: .gray, count: 9)
+        buttonColors.shuffle()
         points = 0
         selectedIndices.removeAll()
         isProcessing = false
         gameCompleted = false
-        showCountdown = true
-        countdown = 3
-        isShowingColors = false // Reset color showing state
-        buttonColors.shuffle()
+        startGame()
     }
 }
 
