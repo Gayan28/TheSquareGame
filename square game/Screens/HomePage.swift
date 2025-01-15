@@ -60,4 +60,3 @@ struct HomePage: View {
 }
 
 // Your ContentView can stay as is, just make sure to call HomePage initially in your App struct or Scene.
-
