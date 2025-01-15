@@ -34,7 +34,7 @@ struct HomePage: View {
                         .cornerRadius(10)
                 }
 
-                NavigationLink(destination: GuidePage()){
+                NavigationLink(destination: GuidePage()) {
                     Text("Guide")
                         .padding()
                         .frame(width: 200, height: 50)
@@ -44,7 +44,7 @@ struct HomePage: View {
                 }
 
                 Button(action: {
-                    // Action for Button 4
+                    exitGame()
                 }) {
                     Text("Exit")
                         .padding()
@@ -57,6 +57,12 @@ struct HomePage: View {
             .padding()
         }
     }
+
+    func exitGame() {
+        exit(0) // Forcefully exits the app
+    }
 }
 
-// Your ContentView can stay as is, just make sure to call HomePage initially in your App struct or Scene.
+#Preview {
+    HomePage()
+}
