@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  square game
-//
-//  Created by Gayan 033 on 2025-01-05.
-//
-
 import SwiftUI
 
 struct ContentView: View {
@@ -17,6 +10,9 @@ struct ContentView: View {
     @State private var gameCompleted: Bool = false
     @State private var showColors: Bool = true
     @State private var countdown: Int = 3
+    @State private var startTime: Date?
+    @State private var elapsedTime: TimeInterval?
+    @State private var highestScore: Double?
 
     init() {
         var baseColors: [Color] = [.red, .green, .blue, .yellow]
@@ -57,6 +53,16 @@ struct ContentView: View {
                 }
             }
 
+            // Highest Score
+            if let highestScore = highestScore {
+                Text(String(format: "Highest Score: %.2f seconds", highestScore))
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                    .padding(.top, 30)
+                    .padding(.bottom, 20)
+            }
+
             // Restart Button
             Button("Restart Game") {
                 restartGame()
@@ -69,7 +75,10 @@ struct ContentView: View {
             Spacer()
         }
         .padding()
-        .onAppear(perform: startGame)
+        .onAppear {
+            startGame()
+            fetchHighestScore()
+        }
         .alert("No Color Matched!", isPresented: $showFailureAlert) {
             Button("OK", role: .cancel) { }
         }
@@ -87,10 +96,16 @@ struct ContentView: View {
                     .font(.headline)
                     .foregroundColor(.white)
 
+                if let elapsedTime = elapsedTime {
+                    Text(String(format: "Time: %.2f seconds", elapsedTime))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+
                 Button(action: restartGame) {
                     Text("Play Again")
                         .padding()
-                        .background(Color.green)
+                        .background(Color.blue)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
@@ -109,6 +124,8 @@ struct ContentView: View {
         squares = buttonColors
         countdown = 3
         showColors = true
+        startTime = nil
+
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
             if countdown > 0 {
                 countdown -= 1
@@ -116,8 +133,15 @@ struct ContentView: View {
                 timer.invalidate()
                 squares = Array(repeating: .gray, count: 9)
                 showColors = false
+                startTime = Date() // Start the timer
             }
         }
+    }
+
+    // Fetches the highest score from UserDefaults
+    func fetchHighestScore() {
+        let highScores = UserDefaults.standard.array(forKey: "HighScores") as? [Double] ?? []
+        highestScore = highScores.first // Fetch the top score
     }
 
     // Handles button clicks during the game
@@ -141,7 +165,9 @@ struct ContentView: View {
                 if points == 4 {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         gameCompleted = true
-                        updateHighScore()
+                        elapsedTime = Date().timeIntervalSince(startTime ?? Date())
+                        updateHighScores()
+                        fetchHighestScore()
                     }
                 }
             } else {
@@ -167,12 +193,17 @@ struct ContentView: View {
         startGame()
     }
 
-    // Updates the high score
-    func updateHighScore() {
-        let currentHighScore = UserDefaults.standard.integer(forKey: "HighScore")
-        if points > currentHighScore {
-            UserDefaults.standard.set(points, forKey: "HighScore")
+    // Updates the high score list
+    func updateHighScores() {
+        guard let elapsedTime = elapsedTime else { return }
+
+        var highScores = UserDefaults.standard.array(forKey: "HighScores") as? [Double] ?? []
+        highScores.append(elapsedTime)
+        highScores.sort()
+        if highScores.count > 10 {
+            highScores = Array(highScores.prefix(10)) // Keep only the top 10 scores
         }
+        UserDefaults.standard.set(highScores, forKey: "HighScores")
     }
 }
 

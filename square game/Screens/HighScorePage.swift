@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct HighScorePage: View {
-    // Retrieve the highest score from UserDefaults
-    let highScore = UserDefaults.standard.integer(forKey: "HighScore")
+    // Retrieve the top 10 highest scores from UserDefaults
+    let highScores: [Double] = UserDefaults.standard.array(forKey: "HighScores") as? [Double] ?? []
 
     var body: some View {
         VStack {
             // Title
-            Text("HIGH SCORE")
+            Text("HIGH SCORES")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.black)
@@ -22,15 +22,26 @@ struct HighScorePage: View {
 
             Spacer()
 
-            // Display the high score
-            Text("Your Highest Score is: \(highScore)")
-                .font(.title)
-                .foregroundColor(.blue)
+            // Display the top 10 high scores
+            List {
+                ForEach(highScores.indices, id: \.self) { index in
+                    HStack {
+                        Text("\(index + 1).")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.blue)
+                        Spacer()
+                        Text(String(format: "%.2f seconds", highScores[index]))
+                            .font(.title2)
+                            .foregroundColor(.green)
+                    }
+                }
+            }
 
             Spacer()
         }
         .padding()
-        .navigationTitle("High Score")
+        .navigationTitle("High Scores")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
